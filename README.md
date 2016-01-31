@@ -5,6 +5,7 @@ A terminal client to access [srrdb.com](http://www.srrdb.com), written in Go.
 ## Install
 
 Simply download the latest release for your arch from [here](https://github.com/hashworks/srrdbTerminalClient/releases/latest) and execute it.
+
 For global access place the executable in your `$PATH`.
 
 ## Usage

@@ -51,8 +51,8 @@ for plat in "${platforms[@]}"; do
         tmpFile="/tmp/srrdb/bin/srrdb.exe"
     fi
 
-    GOOS="${plat%-*}" GOARCH="${plat#*-}" go build -ldflags '-X main.VERSION='"$version"' -X main.commit='"$commit"' -X main.date='"$date" \
-    -o "$tmpFile" "$DIR"/src/*.go
+    GOOS="${plat%-*}" GOARCH="${plat#*-}" go build -ldflags '-X main.VERSION='"$version"' -X main.BUILD_COMMIT='"$commit"' -X main.BUILD_DATE='"$date" \
+    -o "$tmpFile" "$DIR"/*.go
 
     if [ "$?" != 0 ]; then
         echo Build failed! >&2
