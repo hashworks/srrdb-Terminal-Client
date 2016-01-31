@@ -18,8 +18,8 @@ var (
 	BUILD_COMMIT   string = "unknown"
 	BUILD_DATE     string = "unknown"
 	versionFlag    bool
-	searchFlag     string
-	downloadFlag   string
+	searchFlag     bool
+	downloadFlag   bool
 	extensionFlag  string
 	stdoutFlag     bool
 	prunePathsFlag bool
@@ -40,11 +40,11 @@ func main() {
 	flagSet.BoolVar(&versionFlag, "version", false, "")
 	flagSet.BoolVar(&versionFlag, "v", false, "")
 
-	flagSet.StringVar(&searchFlag, "search", "", "")
-	flagSet.StringVar(&searchFlag, "s", "", "")
+	flagSet.BoolVar(&searchFlag, "search", false, "")
+	flagSet.BoolVar(&searchFlag, "s", false, "")
 
-	flagSet.StringVar(&downloadFlag, "download", "", "")
-	flagSet.StringVar(&downloadFlag, "d", "", "")
+	flagSet.BoolVar(&downloadFlag, "download", false, "")
+	flagSet.BoolVar(&downloadFlag, "d", false, "")
 	flagSet.StringVar(&extensionFlag, "extension", "", "")
 	flagSet.StringVar(&extensionFlag, "e", "", "")
 	flagSet.BoolVar(&stdoutFlag, "stdout", false, "")
@@ -68,24 +68,14 @@ func main() {
 		fmt.Println("Build date: " + BUILD_DATE)
 		fmt.Println()
 		fmt.Println("Published under the GNU General Public License v3.0.")
-	case searchFlag != "":
-		search(searchFlag)
-	case downloadFlag != "":
-		download(downloadFlag, extensionFlag, stdoutFlag, prunePathsFlag)
+	case searchFlag:
+		search(strings.Join(flagSet.Args(), " "))
+	case downloadFlag:
+		download(flagSet.Args(), extensionFlag, stdoutFlag, prunePathsFlag)
 	case uploadFlag:
 		upload(flagSet.Args(), usernameFlag, passwordFlag)
 	default:
 		flagSet.Usage()
-	}
-}
-
-func ok(err error, prefix string) {
-	if err != nil {
-		if prefix != "" {
-			fmt.Println(prefix + ":")
-		}
-		fmt.Println(err.Error())
-		os.Exit(1)
 	}
 }
 
@@ -115,7 +105,10 @@ func usage() {
 
 func search(query string) {
 	response, err := srrdb.Search(query)
-	ok(err, "Failed to search for release")
+	if err != nil {
+		fmt.Println("Failed to search for query: " + err.Error())
+		os.Exit(1)
+	}
 	if response.ResultCount == "0" {
 		fmt.Println("Nothing found!")
 		os.Exit(1)
@@ -194,43 +187,50 @@ func saveFile(fp string, data []byte, pruneDir bool) {
 		os.MkdirAll(filepath.Dir(fp), os.ModePerm)
 	}
 	err := ioutil.WriteFile(fp, data, os.ModePerm)
-	ok(err, "Failed to save file to "+fp)
-	fmt.Println("Saved file to " + fp + ".")
+	if err != nil {
+		fmt.Println("Failed to save file to " + fp + ": " + err.Error())
+	} else {
+		fmt.Println("Saved file to " + fp + ".")
+	}
 }
 
-func download(dirname, extension string, toStdout, prunePaths bool) {
-	srr, err := srrdb.Download(dirname)
-	ok(err, "Failed to download SRR file")
-	if isValidSRR(srr) {
-		fmt.Println("The downloaded file isn't a valid SRR file.")
+func download(dirnames []string, extension string, toStdout, prunePaths bool) {
+	if len(dirnames) == 0 {
+		fmt.Println("You must provide at least one dirname.")
 		os.Exit(1)
-	} else {
-		extension = strings.ToLower(extension)
-		if extension == "" || extension == "srr" {
-			if toStdout {
-				fmt.Print(string(srr))
-			} else {
-				saveFile(dirname+".srr", srr, prunePaths)
-			}
+	}
+	for _, dirname := range dirnames {
+		srr, err := srrdb.Download(dirname)
+		if err != nil {
+			fmt.Println("Failed to download SRR file for " + dirname + ": " + err.Error())
 		} else {
-			storedFiles := extractStoredFiles(srr)
-			fileFound := false
-			for _, file := range storedFiles {
-				if strings.ToLower(file.name[len(file.name)-len(extension):]) == extension {
+			if isValidSRR(srr) {
+				fmt.Println("The downloaded file for " + dirname + " isn't a valid SRR file.")
+			} else {
+				extension = strings.ToLower(extension)
+				if extension == "" || extension == "srr" {
 					if toStdout {
-						if fileFound {
-							fmt.Println("\n---")
-						}
-						fmt.Print(string(file.data))
+						fmt.Print(string(srr))
 					} else {
-						saveFile(file.name, file.data, prunePaths)
+						saveFile(dirname+".srr", srr, prunePaths)
 					}
-					fileFound = true
+				} else {
+					storedFiles := extractStoredFiles(srr)
+					fileFound := false
+					for _, file := range storedFiles {
+						if strings.ToLower(file.name[len(file.name)-len(extension):]) == extension {
+							if toStdout {
+								os.Stdout.Write(file.data)
+							} else {
+								saveFile(file.name, file.data, prunePaths)
+							}
+							fileFound = true
+						}
+					}
+					if !fileFound {
+						fmt.Println("Extension not found in SRR of " + dirname + ".")
+					}
 				}
-			}
-			if !fileFound {
-				fmt.Println("Extension not found in SRR.")
-				os.Exit(1)
 			}
 		}
 	}
@@ -249,13 +249,19 @@ func upload(fps []string, username, password string) {
 
 	if username != "" && password != "" {
 		jar, err = srrdb.NewLoginCookieJar(username, password)
-		ok(err, "Failed to login")
+		if err != nil {
+			fmt.Println("Failed to login: " + err.Error())
+			os.Exit(1)
+		}
 	} else {
 		jar, _ = cookiejar.New(&cookiejar.Options{})
 	}
 
 	response, err := srrdb.Upload(fps, jar)
-	ok(err, "Failed to upload SRR files")
+	if err != nil {
+		fmt.Println("Failed to upload SRR files: " + err.Error())
+		os.Exit(1)
+	}
 	for _, file := range response.Files {
 		fmt.Println(file.Dirname + file.Message)
 	}
