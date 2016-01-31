@@ -14,14 +14,14 @@ See `--help`:
 -v, --version
 	Shows the version and a few informations.
 
--s, --search <query>
+-s, --search <query>[...]
 	Searches srrdb.com for releases.
 	For a list of available keywords see http://www.srrdb.com/help#keywords
 
--d, --download <dirname>
+-d, --download <dirname>[...]
 	Download a SRR file from srrdb.com.
 	Options:
-	-e, --extension <extension>
+	-e, --extension=<extension>
 		Saves only files with the specified extension from the SRR file.
 		You can prune file paths with -p, --prunePaths.
 	-o, --stdout
@@ -30,7 +30,7 @@ See `--help`:
 -u, --upload <filename>[...]
 	Uploads one or multiple files to srrdb.com.
 	Options:
-	--username and --password
+	--username=<username> and --password=<password>
 		If you provide this it will post the SRR file using this account.
 ```
 
