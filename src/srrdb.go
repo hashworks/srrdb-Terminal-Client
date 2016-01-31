@@ -88,7 +88,7 @@ func usage() {
 	fmt.Println("	For a list of available keywords see http://www.srrdb.com/help#keywords")
 	fmt.Println("")
 	fmt.Println("-d, --download <dirname>[...]")
-	fmt.Println("	Download a SRR file from srrdb.com.")
+	fmt.Println("	Download one or multiple SRR files from srrdb.com.")
 	fmt.Println("	Options:")
 	fmt.Println("	-e, --extension=<extension>")
 	fmt.Println("		Saves only files with the specified extension from the SRR file.")

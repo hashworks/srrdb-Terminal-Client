@@ -19,7 +19,7 @@ See `--help`:
 	For a list of available keywords see http://www.srrdb.com/help#keywords
 
 -d, --download <dirname>[...]
-	Download a SRR file from srrdb.com.
+	Download one or multiple SRR files from srrdb.com.
 	Options:
 	-e, --extension=<extension>
 		Saves only files with the specified extension from the SRR file.
