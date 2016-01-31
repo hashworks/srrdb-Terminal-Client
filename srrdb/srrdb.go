@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -84,9 +83,7 @@ func Search(query string) (SearchResponse, error) {
 		return SearchResponse{}, err
 	}
 	var srrDBResponse SearchResponse
-	fmt.Println(string(bytes))
 	err = json.Unmarshal(bytes, &srrDBResponse)
-	fmt.Println(srrDBResponse)
 	return srrDBResponse, err
 }
 
