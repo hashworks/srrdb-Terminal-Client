@@ -1,4 +1,4 @@
-// A Golang package to download & upload SRR files from srrdb.com and to access their search API.
+// Package srrdb allows to download & upload SRR files from srrdb.com and to access their search API.
 package srrdb
 
 import (
