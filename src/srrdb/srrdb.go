@@ -1,3 +1,4 @@
+// A Golang package to download & upload SRR files from srrdb.com and to access their search API.
 package srrdb
 
 import (
@@ -18,6 +19,7 @@ import (
 
 const srrdbURL = "http://www.srrdb.com"
 
+// SearchResponse holds the results of a search.
 type SearchResponse struct {
 	Results     []SearchResult `json:"results"`
 	ResultCount string         `json:"resultsCount"`
@@ -25,6 +27,7 @@ type SearchResponse struct {
 	Query       []string       `json:"query"`
 }
 
+// SearchResult is the result of a search.
 type SearchResult struct {
 	Dirname        string `json:"release"`
 	DateResponse   string `json:"date"` // f.e. 2014-06-16 17:35:26
@@ -32,16 +35,19 @@ type SearchResult struct {
 	HasSRSResponse string `json:"hasSRS"`
 }
 
-type UploadResult struct {
+// UploadResponse holds the results of a file upload.
+type UploadResponse struct {
 	Files []UploadedFile `json:"files"`
 }
 
+// UploadedFile is the result of a file upload.
 type UploadedFile struct {
 	Dirname string `json:"name"`
 	Color   int    `json:"color"`
 	Message string `json:"message"`
 }
 
+// HasNFO will return if the search-result has a NFO file.
 func (r *SearchResult) HasNFO() bool {
 	if r.HasNFOResponse == "yes" {
 		return true
@@ -49,6 +55,7 @@ func (r *SearchResult) HasNFO() bool {
 	return false
 }
 
+// HasSRS will return if the search-result has a SRS file.
 func (r *SearchResult) HasSRS() bool {
 	if r.HasSRSResponse == "yes" {
 		return true
@@ -138,27 +145,27 @@ func NewLoginCookieJar(u, p string) (*cookiejar.Jar, error) {
 
 // Upload will upload one or more SRR files to the srrdb.
 // You can provide a login with a cookie jar, see NewLoginCookieJar().
-func Upload(fps []string, jar *cookiejar.Jar) (UploadResult, error) {
+func Upload(fps []string, jar *cookiejar.Jar) (UploadResponse, error) {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	for _, fp := range fps {
 		f, err := os.Open(fp)
 		if err != nil {
-			return UploadResult{}, err
+			return UploadResponse{}, err
 		}
 		fw, err := w.CreateFormFile("files[]", fp)
 		if err != nil {
-			return UploadResult{}, err
+			return UploadResponse{}, err
 		}
 		if _, err = io.Copy(fw, f); err != nil {
-			return UploadResult{}, err
+			return UploadResponse{}, err
 		}
 	}
 	w.Close()
 
 	req, err := http.NewRequest("POST", srrdbURL+"/release/upload", &b)
 	if err != nil {
-		return UploadResult{}, err
+		return UploadResponse{}, err
 	}
 
 	req.Header.Add("Content-Type", w.FormDataContentType())
@@ -166,16 +173,16 @@ func Upload(fps []string, jar *cookiejar.Jar) (UploadResult, error) {
 	client := &http.Client{Jar: jar}
 	response, err := client.Do(req)
 	if err != nil {
-		return UploadResult{}, err
+		return UploadResponse{}, err
 	}
 	if response.StatusCode != 200 {
-		return UploadResult{}, errors.New("Unexpected return code " + strconv.Itoa(response.StatusCode) + ".")
+		return UploadResponse{}, errors.New("Unexpected return code " + strconv.Itoa(response.StatusCode) + ".")
 	}
 	bytes, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return UploadResult{}, err
+		return UploadResponse{}, err
 	}
-	var uploadResult UploadResult
+	var uploadResult UploadResponse
 	err = json.Unmarshal(bytes, &uploadResult)
 	return uploadResult, err
 }
