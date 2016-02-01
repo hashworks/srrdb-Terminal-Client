@@ -26,8 +26,8 @@ var (
 	uploadFlag     bool
 	usernameFlag   string
 	passwordFlag   string
-	releaseFlag   string
-	folderFlag   string
+	releaseFlag    string
+	folderFlag     string
 )
 
 type storedFile struct {
@@ -311,7 +311,7 @@ func uploadStoredFiles(fps []string, dirname, folder, username, password string)
 		if err != nil {
 			fmt.Println("Failed to upload stored file - " + err.Error())
 		} else {
-			fmt.Println(response);
+			fmt.Println(response)
 		}
 	}
 }

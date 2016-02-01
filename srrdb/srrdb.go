@@ -13,9 +13,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
-	"regexp"
 )
 
 const srrdbURL = "http://www.srrdb.com"
@@ -212,9 +212,10 @@ func UploadStoredFile(fp, dirname, folder string, jar *cookiejar.Jar) (string, e
 		return "", err
 	}
 	w.WriteField("folder", folder)
+	w.WriteField("add", "")
 	w.Close()
 
-	req, err := http.NewRequest("POST", "http://www.srrdb.com/release/add/" + dirname, &b)
+	req, err := http.NewRequest("POST", "http://www.srrdb.com/release/add/"+dirname, &b)
 	if err != nil {
 		return "", err
 	}
@@ -232,7 +233,7 @@ func UploadStoredFile(fp, dirname, folder string, jar *cookiejar.Jar) (string, e
 	if err != nil {
 		return "", err
 	}
-	res := regexp.MustCompile(`<div class="alert alert-.*>\n\s+([^<]*)`).FindStringSubmatch(string(bytes))
+	res := regexp.MustCompile(`<div class="alert alert-.*>\r\s*([^<]*)`).FindStringSubmatch(string(bytes))
 	if len(res) < 2 {
 		return "", errors.New("Failed to parse upload result.")
 	}
