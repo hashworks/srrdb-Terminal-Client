@@ -40,6 +40,14 @@ See `--help`:
 		Optional to --release, this will set the folder of the stored file.
 ```
 
+## Tipps for aliases
+
+You're propably better off to use aliases for up- and downloading:
+```sh
+alias "srrdown"="srrdb --download --prunePaths"
+alias "srrup"="srrdb --upload --username hashworks --password '"'foo$$bar'"'"
+```
+
 ## TODO
 
 * Add Tests
