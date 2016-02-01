@@ -24,14 +24,14 @@ See `--help`:
 	Options:
 	-e, --extension=<extension>
 		Saves only files with the specified extension from the SRR file.
-		You can prune file paths with -p, --prunePaths.
+		You can prune file paths with --prunePaths.
 	-o, --stdout
 		Print file data to stdout instead of saving the file.
 
 -u, --upload <filename>[...]
 	Uploads one or multiple files to srrdb.com.
 	Options:
-	--username=<username> and --password=<password>
+	-n, --username=<username> and -p, --password=<password>
 		If you provide this it will post the file using this account.
 	-r, --release=<dirname>
 		If you provide this it will post a stored file to the specified release.
