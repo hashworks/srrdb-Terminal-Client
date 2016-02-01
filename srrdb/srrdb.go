@@ -12,8 +12,10 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"regexp"
 )
 
 const srrdbURL = "http://www.srrdb.com"
@@ -35,12 +37,12 @@ type SearchResult struct {
 }
 
 // UploadResponse holds the results of a file upload.
-type UploadResponse struct {
-	Files []UploadedFile `json:"files"`
+type SRRUploadResponse struct {
+	Files []SRRUploadedFile `json:"files"`
 }
 
 // UploadedFile is the result of a file upload.
-type UploadedFile struct {
+type SRRUploadedFile struct {
 	Dirname string `json:"name"`
 	Color   int    `json:"color"`
 	Message string `json:"message"`
@@ -122,47 +124,52 @@ func NewLoginCookieJar(u, p string) (*cookiejar.Jar, error) {
 	if err != nil && err.Error() != "Post /: redirect" {
 		return &cookiejar.Jar{}, err
 	}
-	loginSucessfull := false
-	for _, c := range response.Cookies() {
-		if c.Name == "uid" {
-			loginSucessfull = true
-			break
-		}
-	}
-	if loginSucessfull == false {
+	if !containsValidLoginCookie(response.Cookies()) {
 		return &cookiejar.Jar{}, errors.New("Wrong authentication?")
 	}
 	jar, err := cookiejar.New(&cookiejar.Options{})
 	if err != nil {
 		return &cookiejar.Jar{}, err
 	}
-	jar.SetCookies(&url.URL{Scheme: "http", Host: "www.srrdb.com", Path: "/"}, response.Cookies())
+	jar.SetCookies(srrdbURLStruct(), response.Cookies())
 	return jar, nil
 }
 
-// Upload will upload one or more SRR files to the srrdb.
+func containsValidLoginCookie([]http.Cookie cookies) {
+	for _, c := range cookies {
+		if c.Name == "uid" {
+			return true
+		}
+	}
+}
+
+func srrdbURLStruct() *url.URL {
+	return &url.URL{Scheme: "http", Host: "www.srrdb.com", Path: "/"}
+}
+
+// UploadSRRs will upload one or more SRR files to the srrdb.
 // You can provide a login with a cookie jar, see NewLoginCookieJar().
-func Upload(fps []string, jar *cookiejar.Jar) (UploadResponse, error) {
+func UploadSRRs(fps []string, jar *cookiejar.Jar) (SRRUploadResponse, error) {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	for _, fp := range fps {
 		f, err := os.Open(fp)
 		if err != nil {
-			return UploadResponse{}, err
+			return SRRUploadResponse{}, err
 		}
-		fw, err := w.CreateFormFile("files[]", fp)
+		fw, err := w.CreateFormFile("files[]", filepath.Base(fp))
 		if err != nil {
-			return UploadResponse{}, err
+			return SRRUploadResponse{}, err
 		}
 		if _, err = io.Copy(fw, f); err != nil {
-			return UploadResponse{}, err
+			return SRRUploadResponse{}, err
 		}
 	}
 	w.Close()
 
 	req, err := http.NewRequest("POST", srrdbURL+"/release/upload", &b)
 	if err != nil {
-		return UploadResponse{}, err
+		return SRRUploadResponse{}, err
 	}
 
 	req.Header.Add("Content-Type", w.FormDataContentType())
@@ -170,16 +177,63 @@ func Upload(fps []string, jar *cookiejar.Jar) (UploadResponse, error) {
 	client := &http.Client{Jar: jar}
 	response, err := client.Do(req)
 	if err != nil {
-		return UploadResponse{}, err
+		return SRRUploadResponse{}, err
 	}
 	if response.StatusCode != 200 {
-		return UploadResponse{}, errors.New("Unexpected return code " + strconv.Itoa(response.StatusCode) + ".")
+		return SRRUploadResponse{}, errors.New("Unexpected return code " + strconv.Itoa(response.StatusCode) + ".")
 	}
 	bytes, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return UploadResponse{}, err
+		return SRRUploadResponse{}, err
 	}
-	var uploadResult UploadResponse
+	var uploadResult SRRUploadResponse
 	err = json.Unmarshal(bytes, &uploadResult)
 	return uploadResult, err
+}
+
+// UploadStoredFile will upload a stored file into a folder of a provided release to the srrdb.
+// You must provide a valid login with a cookie jar, see NewLoginCookieJar().
+func UploadStoredFile(fp, dirname, folder string, jar *cookiejar.Jar) (string, error) {
+	if !containsValidLoginCookie(jar.Cookies(srrdbURLStruct())) {
+		return "", errors.New("No login cookie found in provided cookie jar.")
+	}
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	f, err := os.Open(fp)
+	if err != nil {
+		return "", err
+	}
+	fw, err := w.CreateFormFile("file", filepath.Base(fp))
+	if err != nil {
+		return "", err
+	}
+	if _, err = io.Copy(fw, f); err != nil {
+		return "", err
+	}
+	w.WriteField("folder", folder)
+	w.Close()
+
+	req, err := http.NewRequest("POST", "http://www.srrdb.com/release/add/" + dirname, &b)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Add("Content-Type", w.FormDataContentType())
+	client := &http.Client{Jar: jar}
+	response, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	if response.StatusCode != 200 {
+		return "", errors.New("Unexpected return code " + strconv.Itoa(response.StatusCode) + ".")
+	}
+	bytes, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+	res := regexp.MustCompile(`<div class="alert alert-.*>\n\s+([^<]*)`).FindStringSubmatch(string(bytes))
+	if len(res) < 2 {
+		return "", "Failed to parse upload result."
+	}
+	return res[1], nil
 }

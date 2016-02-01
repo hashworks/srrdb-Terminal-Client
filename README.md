@@ -32,7 +32,12 @@ See `--help`:
 	Uploads one or multiple files to srrdb.com.
 	Options:
 	--username=<username> and --password=<password>
-		If you provide this it will post the SRR file using this account.
+		If you provide this it will post the file using this account.
+	-r, --release=<dirname>
+		If you provide this it will post a stored file to the specified release.
+		Note that you need a valid login for this.
+	-f, --folder=<folder>
+		Optional to --release, this will set the folder of the stored file.
 ```
 
 ## TODO

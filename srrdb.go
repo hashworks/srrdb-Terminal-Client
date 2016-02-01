@@ -26,6 +26,8 @@ var (
 	uploadFlag     bool
 	usernameFlag   string
 	passwordFlag   string
+	releaseFlag   string
+	folderFlag   string
 )
 
 type storedFile struct {
@@ -56,6 +58,10 @@ func main() {
 	flagSet.BoolVar(&uploadFlag, "u", false, "")
 	flagSet.StringVar(&usernameFlag, "username", "", "")
 	flagSet.StringVar(&passwordFlag, "password", "", "")
+	flagSet.StringVar(&releaseFlag, "release", "", "")
+	flagSet.StringVar(&releaseFlag, "r", "", "")
+	flagSet.StringVar(&folderFlag, "folder", "", "")
+	flagSet.StringVar(&folderFlag, "f", "", "")
 
 	flagSet.Parse(os.Args[1:])
 
@@ -73,7 +79,11 @@ func main() {
 	case downloadFlag:
 		download(flagSet.Args(), extensionFlag, stdoutFlag, prunePathsFlag)
 	case uploadFlag:
-		upload(flagSet.Args(), usernameFlag, passwordFlag)
+		if releaseFlag == "" {
+			uploadSRRs(flagSet.Args(), usernameFlag, passwordFlag)
+		} else {
+			uploadStoredFiles(flagSet.Args(), releaseFlag, folderFlag, usernameFlag, passwordFlag)
+		}
 	default:
 		flagSet.Usage()
 	}
@@ -100,7 +110,12 @@ func usage() {
 	fmt.Println("	Uploads one or multiple files to srrdb.com.")
 	fmt.Println("	Options:")
 	fmt.Println("	--username=<username> and --password=<password>")
-	fmt.Println("		If you provide this it will post the SRR file using this account.")
+	fmt.Println("		If you provide this it will post the file using this account.")
+	fmt.Println("	-r, --release=<dirname>")
+	fmt.Println("		If you provide this it will post a stored file to the specified release.")
+	fmt.Println("		Note that you need a valid login for this.")
+	fmt.Println("	-f, --folder=<folder>")
+	fmt.Println("		Optional to --release, this will set the folder of the stored file.")
 }
 
 func search(query string) {
@@ -236,7 +251,7 @@ func download(dirnames []string, extension string, toStdout, prunePaths bool) {
 	}
 }
 
-func upload(fps []string, username, password string) {
+func uploadSRRs(fps []string, username, password string) {
 	if len(fps) == 0 {
 		fmt.Println("You must provide at least one file to upload.")
 		os.Exit(1)
@@ -257,12 +272,45 @@ func upload(fps []string, username, password string) {
 		jar, _ = cookiejar.New(&cookiejar.Options{})
 	}
 
-	response, err := srrdb.Upload(fps, jar)
+	response, err := srrdb.UploadSRRs(fps, jar)
 	if err != nil {
 		fmt.Println("Failed to upload SRR files: " + err.Error())
 		os.Exit(1)
 	}
 	for _, file := range response.Files {
 		fmt.Println(file.Dirname + file.Message)
+	}
+}
+
+func uploadStoredFiles(fps []string, dirname, folder, username, password string) {
+	if len(fps) == 0 {
+		fmt.Println("You must provide at least one file to upload.")
+		os.Exit(1)
+	}
+	if usernameFlag == "" || passwordFlag == "" {
+		fmt.Println("You need to set your username and password to upload stored files.")
+		os.Exit(1)
+	}
+
+	var (
+		jar *cookiejar.Jar
+		err error
+	)
+
+	jar, err = srrdb.NewLoginCookieJar(username, password)
+	if err != nil {
+		fmt.Println("Failed to login: " + err.Error())
+		os.Exit(1)
+	}
+
+	for i := 0; i < len(fps); i++ {
+		fp := fps[i]
+		response, err := srrdb.UploadStoredFile(fp, dirname, folder, jar)
+		fmt.Print(filepath.Base(fp) + ": ")
+		if err != nil {
+			fmt.Println("Failed to upload stored file - " + err.Error())
+		} else {
+			fmt.Println(response);
+		}
 	}
 }
