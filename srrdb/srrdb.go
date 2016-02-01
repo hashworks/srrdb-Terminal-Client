@@ -135,12 +135,13 @@ func NewLoginCookieJar(u, p string) (*cookiejar.Jar, error) {
 	return jar, nil
 }
 
-func containsValidLoginCookie([]http.Cookie cookies) {
+func containsValidLoginCookie(cookies []*http.Cookie) bool {
 	for _, c := range cookies {
 		if c.Name == "uid" {
 			return true
 		}
 	}
+	return false
 }
 
 func srrdbURLStruct() *url.URL {
@@ -233,7 +234,7 @@ func UploadStoredFile(fp, dirname, folder string, jar *cookiejar.Jar) (string, e
 	}
 	res := regexp.MustCompile(`<div class="alert alert-.*>\n\s+([^<]*)`).FindStringSubmatch(string(bytes))
 	if len(res) < 2 {
-		return "", "Failed to parse upload result."
+		return "", errors.New("Failed to parse upload result.")
 	}
 	return res[1], nil
 }
