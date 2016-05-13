@@ -279,7 +279,11 @@ func uploadSRRs(fps []string, username, password string) {
 		os.Exit(1)
 	}
 	for _, file := range response.Files {
-		fmt.Println(file.Dirname + file.Message)
+		if file.Dirname == file.Message[:len(file.Dirname)] {
+			fmt.Println(file.Message)
+		} else {
+			fmt.Println(file.Dirname + ": " + file.Message)
+		}
 	}
 }
 
