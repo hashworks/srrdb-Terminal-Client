@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/hashworks/srrdb/srrdb"
+	"github.com/hashworks/go-srrdb-API/srrdb"
 	"io/ioutil"
 	"net/http/cookiejar"
 	"os"

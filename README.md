@@ -47,7 +47,3 @@ You're propably better off to use aliases for up- and downloading:
 alias "srrdown"="srrdb --download --prunePaths"
 alias "srrup"="srrdb --upload --username hashworks --password '"'foo$$bar'"'"
 ```
-
-## TODO
-
-* Add Tests
