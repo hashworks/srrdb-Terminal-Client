@@ -69,7 +69,7 @@ func main() {
 	switch {
 	case versionFlag:
 		fmt.Println("srrdb.com Terminal Client")
-		fmt.Println("https://github.com/hashworks/srrdbTerminalClient")
+		fmt.Println("https://github.com/hashworks/srrdb-Terminal-Client")
 		fmt.Println("Version: " + VERSION)
 		fmt.Println("Commit: " + BUILD_COMMIT)
 		fmt.Println("Build date: " + BUILD_DATE)
