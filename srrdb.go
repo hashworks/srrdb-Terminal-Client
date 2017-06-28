@@ -110,7 +110,7 @@ func usage() {
 	fmt.Println("-u, --upload <filename>[...]")
 	fmt.Println("	Uploads one or multiple files to srrdb.com.")
 	fmt.Println("	Options:")
-	fmt.Println("	-u, --username=<username> and -p, --password=<password>")
+	fmt.Println("	-n, --username=<username> and -p, --password=<password>")
 	fmt.Println("		If you provide this it will post files using this account.")
 	fmt.Println("	-r, --release=<dirname>")
 	fmt.Println("		If you provide this it will post stored files to the specified release.")
