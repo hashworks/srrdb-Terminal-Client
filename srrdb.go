@@ -161,13 +161,6 @@ func bytesToInt(b []byte) int {
 	return int(r)
 }
 
-func isValidSRR(srr []byte) bool {
-	if srr[0] != 0x69 || srr[1] != 0x69 || srr[2] != 0x69 {
-		return true
-	}
-	return false
-}
-
 func extractStoredFiles(srr []byte) []storedFile {
 	/*
 		[SRR Stored File Block
@@ -184,7 +177,7 @@ func extractStoredFiles(srr []byte) []storedFile {
 	*/
 	var storedFiles []storedFile
 	for i := 0; i < len(srr); i++ {
-		if srr[i] == 0x6A && srr[i+1] == 0x6A && srr[i+1] == 0x6A {
+		if srr[i] == 0x6A && srr[i+1] == 0x6A && srr[i+2] == 0x6A {
 			nameStart := i + 13
 			nameSize := bytesToInt(srr[i+11 : nameStart])
 			dataStart := nameStart + nameSize
@@ -220,7 +213,7 @@ func download(dirnames []string, extension string, toStdout, prunePaths bool) {
 		if err != nil {
 			fmt.Println("Failed to download SRR file for " + dirname + ": " + err.Error())
 		} else {
-			if isValidSRR(srr) {
+			if srr[0] != 0x69 || srr[1] != 0x69 || srr[2] != 0x69 {
 				fmt.Println("The downloaded file for " + dirname + " isn't a valid SRR file.")
 			} else {
 				extension = strings.ToLower(extension)
