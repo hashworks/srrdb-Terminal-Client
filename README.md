@@ -13,7 +13,7 @@ Other users should simply download the latest release for your arch from [here](
 See `--help`:
 ```
 -v, --version
-	Shows the version and a few informations.
+	Shows the version and bit of information.
 
 -s, --search <query>[...]
 	Searches srrdb.com for releases.
