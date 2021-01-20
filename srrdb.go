@@ -92,7 +92,7 @@ func main() {
 
 func usage() {
 	fmt.Println("-v, --version")
-	fmt.Println("	Shows the version and a few informations.")
+	fmt.Println("	Shows the version and a bit of information.")
 	fmt.Println("")
 	fmt.Println("-s, --search <query>[...]")
 	fmt.Println("	Searches srrdb.com for releases.")
