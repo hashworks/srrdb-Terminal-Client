@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/hashworks/go-srrdb-API/srrdb"
 	"io/ioutil"
 	"net/http/cookiejar"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/hashworks/go-srrdb-API/srrdb"
 )
 
 var (
@@ -125,7 +126,7 @@ func search(query string) {
 		fmt.Println("Failed to search for query: " + err.Error())
 		os.Exit(1)
 	}
-	if response.ResultCount == "0" {
+	if response.ResultCount == 0 {
 		fmt.Println("Nothing found!")
 		os.Exit(1)
 	}
