@@ -4,9 +4,9 @@ A terminal client to access [srrdb.com](http://www.srrdb.com), written in Go.
 
 ## Install
 
-Arch Linux users can use the AUR package [srrdb-terminal-client](https://aur.archlinux.org/packages/srrdb-terminal-client/).
+Arch Linux users can use the `community` package [srrdb-terminal-client](https://archlinux.org/packages/community/x86_64/srrdb-terminal-client/).
 
-Other users should simply download the latest release for your arch from [here](https://github.com/hashworks/srrdb-Terminal-Client/releases/latest) and move the executable to their `$PATH`.
+Other users should simply download the latest release for their arch from [here](https://github.com/hashworks/srrdb-Terminal-Client/releases/latest) and move the executable to their `$PATH`.
 
 ## Usage
 
