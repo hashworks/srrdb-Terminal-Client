@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -29,6 +32,9 @@ var (
 	passwordFlag   string
 	releaseFlag    string
 	folderFlag     string
+	imdbFlag       bool
+	nfoFlag        bool
+	detailsFlag    bool
 )
 
 type storedFile struct {
@@ -64,6 +70,12 @@ func main() {
 	flagSet.StringVar(&releaseFlag, "r", "", "")
 	flagSet.StringVar(&folderFlag, "folder", "", "")
 	flagSet.StringVar(&folderFlag, "f", "", "")
+	flagSet.BoolVar(&imdbFlag, "imdb", false, "")
+	flagSet.BoolVar(&imdbFlag, "i", false, "")
+	flagSet.BoolVar(&nfoFlag, "nfo", false, "")
+	flagSet.BoolVar(&nfoFlag, "N", false, "")
+	flagSet.BoolVar(&detailsFlag, "details", false, "")
+	flagSet.BoolVar(&detailsFlag, "D", false, "")
 
 	flagSet.Parse(os.Args[1:])
 
@@ -86,6 +98,12 @@ func main() {
 		} else {
 			uploadStoredFiles(flagSet.Args(), releaseFlag, folderFlag, usernameFlag, passwordFlag)
 		}
+	case imdbFlag:
+		getIMDB(strings.Join(flagSet.Args(), " "))
+	case nfoFlag:
+		getNFO(strings.Join(flagSet.Args(), " "))
+	case detailsFlag:
+		getDetails(strings.Join(flagSet.Args(), " "))
 	default:
 		flagSet.Usage()
 	}
@@ -118,6 +136,15 @@ func usage() {
 	fmt.Println("		Note that you need a valid login for this.")
 	fmt.Println("	-f, --folder=<folder>")
 	fmt.Println("		Optional to --release, this will set the folder of the stored file.")
+	fmt.Println("")
+	fmt.Println("-i, --imdb <releasename>")
+	fmt.Println("	Returns IMDB information for a release.")
+	fmt.Println("")
+	fmt.Println("-N, --nfo <releasename>")
+	fmt.Println("	List nfo files with download nfo url for a release.")
+	fmt.Println("")
+	fmt.Println("-D, --details <releasename>")
+	fmt.Println("	Returns information about a single release.")
 }
 
 func search(query string) {
@@ -317,4 +344,136 @@ func uploadStoredFiles(fps []string, dirname, folder, username, password string)
 			fmt.Println(response)
 		}
 	}
+}
+
+func getIMDB(releasename string) {
+	if releasename == "" {
+		fmt.Println("You must provide a releasename.")
+		os.Exit(1)
+	}
+
+	apiURL := "https://api.srrdb.com/v1/imdb/" + url.PathEscape(releasename)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		fmt.Println("Failed to get IMDB information: " + err.Error())
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Failed to read response: " + err.Error())
+		os.Exit(1)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("API returned error: " + resp.Status)
+		fmt.Println(string(body))
+		os.Exit(1)
+	}
+
+	var jsonData interface{}
+	if err := json.Unmarshal(body, &jsonData); err != nil {
+		fmt.Println("Failed to parse JSON: " + err.Error())
+		fmt.Println("Raw response:")
+		fmt.Print(string(body))
+		os.Exit(1)
+	}
+
+	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		fmt.Println("Failed to format JSON: " + err.Error())
+		fmt.Print(string(body))
+		os.Exit(1)
+	}
+
+	fmt.Println(string(prettyJSON))
+}
+
+func getNFO(releasename string) {
+	if releasename == "" {
+		fmt.Println("You must provide a releasename.")
+		os.Exit(1)
+	}
+
+	apiURL := "https://api.srrdb.com/v1/nfo/" + url.PathEscape(releasename)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		fmt.Println("Failed to get NFO information: " + err.Error())
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Failed to read response: " + err.Error())
+		os.Exit(1)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("API returned error: " + resp.Status)
+		fmt.Println(string(body))
+		os.Exit(1)
+	}
+
+	var jsonData interface{}
+	if err := json.Unmarshal(body, &jsonData); err != nil {
+		fmt.Println("Failed to parse JSON: " + err.Error())
+		fmt.Println("Raw response:")
+		fmt.Print(string(body))
+		os.Exit(1)
+	}
+
+	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		fmt.Println("Failed to format JSON: " + err.Error())
+		fmt.Print(string(body))
+		os.Exit(1)
+	}
+
+	fmt.Println(string(prettyJSON))
+}
+
+func getDetails(releasename string) {
+	if releasename == "" {
+		fmt.Println("You must provide a releasename.")
+		os.Exit(1)
+	}
+
+	apiURL := "https://api.srrdb.com/v1/details/" + url.PathEscape(releasename)
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		fmt.Println("Failed to get details: " + err.Error())
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Failed to read response: " + err.Error())
+		os.Exit(1)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("API returned error: " + resp.Status)
+		fmt.Println(string(body))
+		os.Exit(1)
+	}
+
+	var jsonData interface{}
+	if err := json.Unmarshal(body, &jsonData); err != nil {
+		fmt.Println("Failed to parse JSON: " + err.Error())
+		fmt.Println("Raw response:")
+		fmt.Print(string(body))
+		os.Exit(1)
+	}
+
+	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		fmt.Println("Failed to format JSON: " + err.Error())
+		fmt.Print(string(body))
+		os.Exit(1)
+	}
+
+	fmt.Println(string(prettyJSON))
 }

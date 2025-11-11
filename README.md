@@ -38,6 +38,15 @@ See `--help`:
 		Note that you need a valid login for this.
 	-f, --folder=<folder>
 		Optional to --release, this will set the folder of the stored files.
+
+-i, --imdb <releasename>
+	Returns IMDB information for a release.
+
+-N, --nfo <releasename>
+	List nfo files with download nfo url for a release.
+
+-D, --details <releasename>
+	Returns information about a single release.
 ```
 
 ## Tips for aliases
