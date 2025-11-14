@@ -38,6 +38,24 @@ See `--help`:
 		Note that you need a valid login for this.
 	-f, --folder=<folder>
 		Optional to --release, this will set the folder of the stored files.
+
+-i, --imdb <releasename>[...]
+	Shows IMDB information for one or multiple releases.
+	Options:
+	-j, --json
+		Output in JSON format.
+
+-N, --nfo <releasename>[...]
+	Shows NFO files with download URLs for one or multiple releases.
+	Options:
+	-j, --json
+		Output in JSON format.
+
+-D, --details <releasename>[...]
+	Shows detailed information for one or multiple releases.
+	Options:
+	-j, --json
+		Output in JSON format.
 ```
 
 ## Tips for aliases
