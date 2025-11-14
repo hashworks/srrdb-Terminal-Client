@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +30,10 @@ var (
 	passwordFlag   string
 	releaseFlag    string
 	folderFlag     string
+	imdbFlag       bool
+	nfoFlag        bool
+	detailsFlag    bool
+	jsonFlag       bool
 )
 
 type storedFile struct {
@@ -65,6 +70,18 @@ func main() {
 	flagSet.StringVar(&folderFlag, "folder", "", "")
 	flagSet.StringVar(&folderFlag, "f", "", "")
 
+	flagSet.BoolVar(&imdbFlag, "imdb", false, "")
+	flagSet.BoolVar(&imdbFlag, "i", false, "")
+
+	flagSet.BoolVar(&nfoFlag, "nfo", false, "")
+	flagSet.BoolVar(&nfoFlag, "N", false, "")
+
+	flagSet.BoolVar(&detailsFlag, "details", false, "")
+	flagSet.BoolVar(&detailsFlag, "D", false, "")
+
+	flagSet.BoolVar(&jsonFlag, "json", false, "")
+	flagSet.BoolVar(&jsonFlag, "j", false, "")
+
 	flagSet.Parse(os.Args[1:])
 
 	switch {
@@ -85,6 +102,30 @@ func main() {
 			uploadSRRs(flagSet.Args(), usernameFlag, passwordFlag)
 		} else {
 			uploadStoredFiles(flagSet.Args(), releaseFlag, folderFlag, usernameFlag, passwordFlag)
+		}
+	case imdbFlag:
+		if len(flagSet.Args()) == 0 {
+			fmt.Println("You must provide at least one release name.")
+			os.Exit(1)
+		}
+		for _, releasename := range flagSet.Args() {
+			showIMDB(releasename, jsonFlag)
+		}
+	case nfoFlag:
+		if len(flagSet.Args()) == 0 {
+			fmt.Println("You must provide at least one release name.")
+			os.Exit(1)
+		}
+		for _, releasename := range flagSet.Args() {
+			showNFO(releasename, jsonFlag)
+		}
+	case detailsFlag:
+		if len(flagSet.Args()) == 0 {
+			fmt.Println("You must provide at least one release name.")
+			os.Exit(1)
+		}
+		for _, releasename := range flagSet.Args() {
+			showDetails(releasename, jsonFlag)
 		}
 	default:
 		flagSet.Usage()
@@ -118,6 +159,24 @@ func usage() {
 	fmt.Println("		Note that you need a valid login for this.")
 	fmt.Println("	-f, --folder=<folder>")
 	fmt.Println("		Optional to --release, this will set the folder of the stored file.")
+	fmt.Println("")
+	fmt.Println("-i, --imdb <releasename>[...]")
+	fmt.Println("	Shows IMDB information for one or multiple releases.")
+	fmt.Println("	Options:")
+	fmt.Println("	-j, --json")
+	fmt.Println("		Output in JSON format.")
+	fmt.Println("")
+	fmt.Println("-N, --nfo <releasename>[...]")
+	fmt.Println("	Shows NFO files with download URLs for one or multiple releases.")
+	fmt.Println("	Options:")
+	fmt.Println("	-j, --json")
+	fmt.Println("		Output in JSON format.")
+	fmt.Println("")
+	fmt.Println("-D, --details <releasename>[...]")
+	fmt.Println("	Shows detailed information for one or multiple releases.")
+	fmt.Println("	Options:")
+	fmt.Println("	-j, --json")
+	fmt.Println("		Output in JSON format.")
 }
 
 func search(query string) {
@@ -315,6 +374,96 @@ func uploadStoredFiles(fps []string, dirname, folder, username, password string)
 			fmt.Println("Failed to upload stored file - " + err.Error())
 		} else {
 			fmt.Println(response)
+		}
+	}
+}
+
+func showIMDB(releasename string, jsonOutput bool) {
+	response, err := srrdb.IMDB(releasename)
+	if err != nil {
+		fmt.Println("Failed to get IMDB information for " + releasename + ": " + err.Error())
+		return
+	}
+
+	if jsonOutput {
+		jsonData, err := json.MarshalIndent(response, "", "  ")
+		if err != nil {
+			fmt.Println("Failed to marshal JSON: " + err.Error())
+			return
+		}
+		fmt.Println(string(jsonData))
+	} else {
+		if len(response.Releases) == 0 {
+			fmt.Println("No IMDB information found for " + releasename + ".")
+			return
+		}
+		fmt.Println("Release: " + releasename)
+		for _, release := range response.Releases {
+			fmt.Println("  IMDB ID: " + release.IMDB)
+			fmt.Println("  Title: " + release.Title)
+			fmt.Println("  Rating: " + release.Rating)
+			fmt.Println("  Votes: " + release.Votes)
+		}
+	}
+}
+
+func showNFO(releasename string, jsonOutput bool) {
+	response, err := srrdb.NFO(releasename)
+	if err != nil {
+		fmt.Println("Failed to get NFO information for " + releasename + ": " + err.Error())
+		return
+	}
+
+	if jsonOutput {
+		jsonData, err := json.MarshalIndent(response, "", "  ")
+		if err != nil {
+			fmt.Println("Failed to marshal JSON: " + err.Error())
+			return
+		}
+		fmt.Println(string(jsonData))
+	} else {
+		fmt.Println("Release: " + response.Release)
+		if len(response.NFO) == 0 {
+			fmt.Println("  No NFO files found.")
+			return
+		}
+		for i, nfo := range response.NFO {
+			fmt.Println("  NFO: " + nfo)
+			if i < len(response.NFOLinks) {
+				fmt.Println("    URL: " + response.NFOLinks[i])
+			}
+		}
+	}
+}
+
+func showDetails(releasename string, jsonOutput bool) {
+	response, err := srrdb.Details(releasename)
+	if err != nil {
+		fmt.Println("Failed to get details for " + releasename + ": " + err.Error())
+		return
+	}
+
+	if jsonOutput {
+		jsonData, err := json.MarshalIndent(response, "", "  ")
+		if err != nil {
+			fmt.Println("Failed to marshal JSON: " + err.Error())
+			return
+		}
+		fmt.Println(string(jsonData))
+	} else {
+		fmt.Println("Release: " + response.Name)
+		fmt.Println("Files: " + fmt.Sprintf("%d", len(response.Files)))
+		for _, file := range response.Files {
+			fmt.Println("  " + file.Name + " (" + fmt.Sprintf("%d", file.Size) + " bytes, CRC: " + file.CRC + ")")
+		}
+		if len(response.ArchivedFiles) > 0 {
+			fmt.Println("Archived Files: " + fmt.Sprintf("%d", len(response.ArchivedFiles)))
+			for _, file := range response.ArchivedFiles {
+				fmt.Println("  " + file.Name + " (" + fmt.Sprintf("%d", file.Size) + " bytes, CRC: " + file.CRC + ")")
+			}
+		}
+		if len(response.Adds) > 0 {
+			fmt.Println("Adds: " + fmt.Sprintf("%d", len(response.Adds)))
 		}
 	}
 }
