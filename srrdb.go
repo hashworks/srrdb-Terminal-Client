@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http/cookiejar"
 	"os"
 	"path/filepath"
@@ -196,7 +195,7 @@ func saveFile(fp string, data []byte, pruneDir bool) {
 	} else {
 		os.MkdirAll(filepath.Dir(fp), os.ModePerm)
 	}
-	err := ioutil.WriteFile(fp, data, os.ModePerm)
+	err := os.WriteFile(fp, data, os.ModePerm)
 	if err != nil {
 		fmt.Println("Failed to save file to " + fp + ": " + err.Error())
 	} else {
@@ -307,7 +306,7 @@ func uploadStoredFiles(fps []string, dirname, folder, username, password string)
 		os.Exit(1)
 	}
 
-	for i := 0; i < len(fps); i++ {
+	for i := range fps {
 		fp := fps[i]
 		response, err := srrdb.UploadStoredFile(fp, dirname, folder, jar)
 		fmt.Print(filepath.Base(fp) + ": ")
