@@ -85,15 +85,39 @@ func main() {
 
 	switch {
 	case versionFlag:
-		fmt.Println("srrdb.com Terminal Client")
-		fmt.Println("https://github.com/hashworks/srrdb-Terminal-Client")
-		fmt.Println("Version: " + VERSION)
-		fmt.Println("Commit: " + BUILD_COMMIT)
-		fmt.Println("Build date: " + BUILD_DATE)
-		fmt.Println()
-		fmt.Println("Published under the GNU General Public License v3.0.")
+		versionData := struct {
+			Name       string
+			Repository string
+			Version    string
+			Commit     string
+			BuildDate  string
+			License    string
+		}{
+			Name:       "srrdb.com Terminal Client",
+			Repository: "https://github.com/hashworks/srrdb-Terminal-Client",
+			Version:    VERSION,
+			Commit:     BUILD_COMMIT,
+			BuildDate:  BUILD_DATE,
+			License:    "GNU General Public License v3.0",
+		}
+		if jsonFlag {
+			jsonData, err := json.MarshalIndent(versionData, "", "  ")
+			if err != nil {
+				fmt.Println("Failed to marshal JSON: " + err.Error())
+				return
+			}
+			fmt.Println(string(jsonData))
+		} else {
+			fmt.Println(versionData.Name)
+			fmt.Println(versionData.Repository)
+			fmt.Println("Version: " + versionData.Version)
+			fmt.Println("Commit: " + versionData.Commit)
+			fmt.Println("Build date: " + versionData.BuildDate)
+			fmt.Println()
+			fmt.Printf("Published under the %s.\n", versionData.License)
+		}
 	case searchFlag:
-		search(strings.Join(flagSet.Args(), " "))
+		search(strings.Join(flagSet.Args(), " "), jsonFlag)
 	case downloadFlag:
 		download(flagSet.Args(), extensionFlag, stdoutFlag, prunePathsFlag)
 	case uploadFlag:
@@ -133,31 +157,17 @@ func main() {
 
 func usage() {
 	fmt.Println("-v, --version")
-	fmt.Println("	Shows the version and a bit of information.")
+	fmt.Println("	Shows the version and general information.")
+	fmt.Println("	Options:")
+	fmt.Println("	-j, --json")
+	fmt.Println("		Output in JSON format.")
 	fmt.Println("")
 	fmt.Println("-s, --search <query>[...]")
 	fmt.Println("	Searches srrdb.com for releases.")
 	fmt.Println("	For a list of available keywords see https://www.srrdb.com/help#keywords")
-	fmt.Println("")
-	fmt.Println("-d, --download <dirname>[...]")
-	fmt.Println("	Download one or multiple SRR files from srrdb.com.")
 	fmt.Println("	Options:")
-	fmt.Println("	-e, --extension=<extension>")
-	fmt.Println("		Saves only files with the specified extension from the SRR file.")
-	fmt.Println("		You can prune file paths with --prunePaths.")
-	fmt.Println("	-o, --stdout")
-	fmt.Println("		Print file data to stdout instead of saving the file.")
-	fmt.Println("")
-	fmt.Println("-u, --upload <filename>[...]")
-	fmt.Println("	Uploads one or multiple files to srrdb.com.")
-	fmt.Println("	Options:")
-	fmt.Println("	-n, --username=<username> and -p, --password=<password>")
-	fmt.Println("		If you provide this it will post files using this account.")
-	fmt.Println("	-r, --release=<dirname>")
-	fmt.Println("		If you provide this it will post stored files to the specified release.")
-	fmt.Println("		Note that you need a valid login for this.")
-	fmt.Println("	-f, --folder=<folder>")
-	fmt.Println("		Optional to --release, this will set the folder of the stored file.")
+	fmt.Println("	-j, --json")
+	fmt.Println("		Output in JSON format.")
 	fmt.Println("")
 	fmt.Println("-i, --imdb <releasename>[...]")
 	fmt.Println("	Shows IMDB information for one or multiple releases.")
@@ -176,9 +186,31 @@ func usage() {
 	fmt.Println("	Options:")
 	fmt.Println("	-j, --json")
 	fmt.Println("		Output in JSON format.")
+	fmt.Println("")
+	fmt.Println("-d, --download <dirname>[...]")
+	fmt.Println("	Download one or multiple SRR files from srrdb.com.")
+	fmt.Println("	Options:")
+	fmt.Println("	-e, --extension=<extension>")
+	fmt.Println("		Extract files with the specified extension (sfv, nfo) from the SRR file.")
+	fmt.Println("		You can prune file paths with --prunePaths.")
+	fmt.Println("	-o, --stdout")
+	fmt.Println("		Print file data to stdout instead of saving the file.")
+	fmt.Println("")
+	fmt.Println("-u, --upload <filename>[...]")
+	fmt.Println("	Uploads one or multiple files to srrdb.com.")
+	fmt.Println("	Options:")
+	fmt.Println("	-n, --username=<username> and -p, --password=<password>")
+	fmt.Println("		If you provide this it will post files using this account.")
+	fmt.Println("	-r, --release=<dirname>")
+	fmt.Println("		If you provide this it will post stored files to the specified release.")
+	fmt.Println("		Note that you need a valid login for this.")
+	fmt.Println("	-f, --folder=<folder>")
+	fmt.Println("		Optional to --release, this will set the folder of the stored file.")
+	fmt.Println("")
+	fmt.Println("Options have to be provided before repeating main parameters.")
 }
 
-func search(query string) {
+func search(query string, jsonOutput bool) {
 	response, err := srrdb.Search(query)
 	if err != nil {
 		fmt.Println("Failed to search for query: " + err.Error())
@@ -189,26 +221,34 @@ func search(query string) {
 		os.Exit(1)
 	}
 
-	results := map[string]srrdb.SearchResult{}
-	for _, r := range response.Results {
-		results[r.DateResponse] = r
-	}
-	var keys []string
-	for _, r := range results {
-		keys = append(keys, r.DateResponse)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		result := results[k]
-		fmt.Print("[" + result.DateResponse + "] " + result.Dirname)
-		if result.HasNFO() {
-			fmt.Print(" [NFO]")
+	if jsonOutput {
+		jsonData, err := json.MarshalIndent(response, "", "  ")
+		if err != nil {
+			fmt.Println("Failed to marshal JSON: " + err.Error())
+			return
 		}
-		if result.HasSRS() {
-			fmt.Print(" [SRS]")
+		fmt.Println(string(jsonData))
+	} else {
+		results := map[string]srrdb.SearchResult{}
+		for _, r := range response.Results {
+			results[r.DateResponse] = r
 		}
-		fmt.Print("\n")
+		var keys []string
+		for _, r := range results {
+			keys = append(keys, r.DateResponse)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			result := results[k]
+			fmt.Print("[" + result.DateResponse + "] " + result.Dirname)
+			if result.HasNFO() {
+				fmt.Print(" [NFO]")
+			}
+			if result.HasSRS() {
+				fmt.Print(" [SRS]")
+			}
+			fmt.Print("\n")
+		}
 	}
 }
 

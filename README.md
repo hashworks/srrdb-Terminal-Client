@@ -13,31 +13,17 @@ Other users should simply download the latest release for their arch from [here]
 See `--help`:
 ```
 -v, --version
-	Shows the version and bit of information.
+	Shows the version and general information.
+	Options:
+	-j, --json
+		Output in JSON format.
 
 -s, --search <query>[...]
 	Searches srrdb.com for releases.
 	For a list of available keywords see https://www.srrdb.com/help#keywords
-
--d, --download <dirname>[...]
-	Download one or multiple SRR files from srrdb.com.
 	Options:
-	-e, --extension=<extension>
-		Saves only files with the specified extension from the SRR file.
-		You can prune file paths with --prunePaths.
-	-o, --stdout
-		Print file data to stdout instead of saving the file.
-
--u, --upload <filename>[...]
-	Uploads one or multiple files to srrdb.com.
-	Options:
-	-n, --username=<username> and -p, --password=<password>
-		If you provide this it will post files using this account.
-	-r, --release=<dirname>
-		If you provide this it will post stored files to the specified release.
-		Note that you need a valid login for this.
-	-f, --folder=<folder>
-		Optional to --release, this will set the folder of the stored files.
+	-j, --json
+		Output in JSON format.
 
 -i, --imdb <releasename>[...]
 	Shows IMDB information for one or multiple releases.
@@ -56,6 +42,28 @@ See `--help`:
 	Options:
 	-j, --json
 		Output in JSON format.
+
+-d, --download <dirname>[...]
+	Download one or multiple SRR files from srrdb.com.
+	Options:
+	-e, --extension=<extension>
+		Extract files with the specified extension (sfv, nfo) from the SRR file.
+		You can prune file paths with --prunePaths.
+	-o, --stdout
+		Print file data to stdout instead of saving the file.
+
+-u, --upload <filename>[...]
+	Uploads one or multiple files to srrdb.com.
+	Options:
+	-n, --username=<username> and -p, --password=<password>
+		If you provide this it will post files using this account.
+	-r, --release=<dirname>
+		If you provide this it will post stored files to the specified release.
+		Note that you need a valid login for this.
+	-f, --folder=<folder>
+		Optional to --release, this will set the folder of the stored file.
+
+Options have to be provided before repeating main parameters.
 ```
 
 ## Tips for aliases
