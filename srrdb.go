@@ -97,7 +97,7 @@ func usage() {
 	fmt.Println("")
 	fmt.Println("-s, --search <query>[...]")
 	fmt.Println("	Searches srrdb.com for releases.")
-	fmt.Println("	For a list of available keywords see http://www.srrdb.com/help#keywords")
+	fmt.Println("	For a list of available keywords see https://www.srrdb.com/help#keywords")
 	fmt.Println("")
 	fmt.Println("-d, --download <dirname>[...]")
 	fmt.Println("	Download one or multiple SRR files from srrdb.com.")

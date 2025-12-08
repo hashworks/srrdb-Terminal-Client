@@ -1,6 +1,6 @@
 # srrdb Terminal Client
 
-A terminal client to access [srrdb.com](http://www.srrdb.com), written in Go.
+A terminal client to access [srrdb.com](https://www.srrdb.com), written in Go.
 
 ## Install
 
@@ -17,7 +17,7 @@ See `--help`:
 
 -s, --search <query>[...]
 	Searches srrdb.com for releases.
-	For a list of available keywords see http://www.srrdb.com/help#keywords
+	For a list of available keywords see https://www.srrdb.com/help#keywords
 
 -d, --download <dirname>[...]
 	Download one or multiple SRR files from srrdb.com.
