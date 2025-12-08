@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
+set -e
+
 checkCommand() {
-    which "$1" >/dev/null 2>&1
-    if [ "$?" != "0" ]; then
+    if ! command -v "$1" > /dev/null; then
         echo Please make sure the following command is available: "$1" >&2
-        exit "$?"
+        exit 1
     fi
 }
 
@@ -42,8 +43,7 @@ mkdir ./bin/ 2>/dev/null
 for plat in "${platforms[@]}"; do
     echo Building "$plat" ...
 
-    GOOS="${plat%-*}"
-    GOARCH="${plat#*-}"
+    export GOOS="${plat%-*}"
 
     if [ "$GOOS" != "windows" ]; then
         tmpFile="/tmp/srrdb/bin/srrdb"
@@ -51,13 +51,8 @@ for plat in "${platforms[@]}"; do
         tmpFile="/tmp/srrdb/bin/srrdb.exe"
     fi
 
-    CGO_ENABLED=0 GOOS="${plat%-*}" GOARCH="${plat#*-}" go build -ldflags '-X main.VERSION='"$version"' -X main.BUILD_COMMIT='"$commit"' -X main.BUILD_DATE='"$date" \
+    CGO_ENABLED=0 GOARCH="${plat#*-}" go build -ldflags '-X main.VERSION='"$version"' -X main.BUILD_COMMIT='"$commit"' -X main.BUILD_DATE='"$date" \
     -o "$tmpFile" "$DIR"/*.go
-
-    if [ "$?" != 0 ]; then
-        echo Build failed! >&2
-        exit "$?"
-    fi
 
     if [ "$GOOS" != "windows" ]; then
         tarPath="$DIR"/bin/srrdb-"$plat".tar.gz
@@ -69,10 +64,6 @@ for plat in "${platforms[@]}"; do
         zip -j "$zipPath" "$tmpFile"
     fi
 
-    if [ "$?" != 0 ]; then
-        echo Failed to pack the binary! >&2
-        exit "$?"
-    fi
     echo Done!
 
     rm "$tmpFile"
